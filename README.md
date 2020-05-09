@@ -154,6 +154,46 @@ helm install proxysql-cluster-passive ./proxysql-cluster-passive
 helm install proxysql-sidecar-cascade ./proxysql-sidecar-cascade
 ```
 
+#### Install Ingress controller and add a TCP service to the ingress
+
+```
+minikube addons enable ingress
+kubectl patch configmap tcp-services -n kube-system --patch '{"data":{"6033":"default/proxysql-cluster:6033"}}'
+```
+
+##### To verify
+
+```
+kubectl get configmap tcp-services -n kube-system -o yaml
+```
+
+##### Patch nginx ingress
+
+```
+vi nginx-ingress-controller-patch.yaml
+---
+spec:
+  template:
+    spec:
+      containers:
+      - name: nginx-ingress-controller
+        ports:
+         - containerPort: 6033
+           hostPort: 26033
+---
+        hostname="proxysql-cluster-controller"
+        port=6032
+        weight=0
+        comment="proxysql-cluster-controller"
+kubectl patch deployment nginx-ingress-controller --patch "$(cat nginx-ingress-controller-patch.yaml)" -n kube-system
+```
+
+##### Connect to ProxySQL 
+
+```
+mysql -h$(minikube ip) -P26033 -uroot -pXHCO2ydDXj
+```
+
 ## Useful commands
 
 ### Helm
