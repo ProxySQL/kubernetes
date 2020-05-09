@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-proxysqlcm
+data: 
+  proxysql.cnf: |
+{{ tpl (.Files.Get "files/proxysql.cnf") . | indent 4 }}
+  probe-proxysql.bash: |
+{{ tpl (.Files.Get "files/probe-proxysql.bash") . | indent 4 }}
+  hg-scheduler.bash: |
+{{ tpl (.Files.Get "files/hg-scheduler.bash") . | indent 4 }}

@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "proxysql.fullname" . }}
+  labels:
+{{ include "proxysql.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  serviceName: {{ include "proxysql.fullname" . }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "proxysql.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      labels:
+        app.kubernetes.io/name: {{ include "proxysql.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: admin
+              containerPort: 6032
+              protocol: TCP
+          volumeMounts:
+            - name: {{ .Release.Name }}-config
+              mountPath: /usr/local/bin/probe-proxysql.bash
+              subPath: probe-proxysql.bash
+            - name: {{ .Release.Name }}-config
+              mountPath: /etc/proxysql.cnf
+              subPath: proxysql.cnf
+            - name: {{ .Release.Name }}-config
+              mountPath: /tmp/hg-scheduler.bash
+              subPath: hg-scheduler.bash
+            - name: proxysql-persistent-storage
+              mountPath: /var/lib/proxysql
+          livenessProbe:
+            exec:
+              command: ["/bin/bash","/usr/local/bin/probe-proxysql.bash"]
+          readinessProbe:
+            exec:
+              command: ["/bin/bash","/usr/local/bin/probe-proxysql.bash"]
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      volumes:
+        - name: {{ .Release.Name }}-config
+          configMap:
+            name: {{ .Release.Name }}-proxysqlcm
+  volumeClaimTemplates:
+    - metadata:
+        name: proxysql-persistent-storage
+      spec:
+        accessModes: 
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 500Mi

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "proxysql.fullname" . }}-test-connection"
+  labels:
+{{ include "proxysql.labels" . | indent 4 }}
+  annotations:
+    "helm.sh/hook": test-success
+spec:
+  containers:
+    - name: mysqladmin
+      image: busybox
+      command: ['mysqladmin']
+      args:  ['ping','--host','127.0.0.1','--port','6032','--user','radmin','--password','radmin']
+  restartPolicy: Never

@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "proxysql.fullname" . }}
+  labels:
+{{ include "proxysql.labels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 6032
+      protocol: TCP
+      name: proxysql
+  selector:
+    app.kubernetes.io/name: {{ include "proxysql.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
