@@ -81,10 +81,11 @@ minikube dashboard --url
 http://127.0.0.1:45536/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
 
 # Start dashboard on local IP (forwarded from within Minikube VM) - default port is 8001
+# and the address in this example 192.169.1.28 is the host physical machine IP (not the VM)
 kubectl proxy --address=192.168.1.28 --accept-hosts='^.*'
 ```
 
-Combining the URL and the `kubectl proxy` command the url is: http://192.168.1.28:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
+Combining the URL and the `kubectl proxy --address` on default port 8001 the resulting url is: http://192.168.1.28:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
 
 ## Deploying with Helm
 
@@ -123,7 +124,7 @@ vi proxysql-cluster/files/proxysql.cnf
 helm upgrade proxysql-cluster ./proxysql-cluster
 ```
 
-Optionally do a rolling restart (note, templates are configured to re-deploy on config map changes)
+Optionally do a rolling restart (note, templates are configured to re-deploy on configmap changes, i.e. this step is not required unless configmap checksum is removed)
 
 ```
 kubectl rollout restart deployment/proxysql-cluster
@@ -139,6 +140,10 @@ helm delete proxysql-cluster
 
 ```
 helm install proxysql-sidecar ./proxysql-sidecar
+
+...
+
+helm delete proxysql-sidecar
 ```
 
 #### Deploy core / satelite 
@@ -146,15 +151,23 @@ helm install proxysql-sidecar ./proxysql-sidecar
 ```
 helm install proxysql-cluster-controller ./proxysql-cluster-controller
 helm install proxysql-cluster-passive ./proxysql-cluster-passive
+
+...
+
+helm delete proxysql-cluster-controller proxysql-cluster-passive
 ```
 
 #### Deploy sidecar that connects to `proxysql-cluster-passive` (i.e. Cascaded ProxySQL)
 
 ```
 helm install proxysql-sidecar-cascade ./proxysql-sidecar-cascade
+helm delete proxysql-sidecar-cascade
 ```
 
 #### Install Ingress controller and add a TCP service to the ingress
+
+NOTE: This is only required if you want to connect to you local physical IP
+      and run commands within the Kubernetes ProxySQL Service
 
 ```
 minikube addons enable ingress
