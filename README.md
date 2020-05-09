@@ -80,9 +80,11 @@ minikube dashboard --url
 🤔  Verifying proxy health ...
 http://127.0.0.1:45536/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
 
-# Start dashboard on local IP (forwarded from within Minikube VM)
+# Start dashboard on local IP (forwarded from within Minikube VM) - default port is 8001
 kubectl proxy --address=192.168.1.28 --accept-hosts='^.*'
 ```
+
+Combining the URL and the `kubectl proxy` command the url is: http://192.168.1.28:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
 
 ## Deploying with Helm
 
@@ -150,6 +152,46 @@ helm install proxysql-cluster-passive ./proxysql-cluster-passive
 
 ```
 helm install proxysql-sidecar-cascade ./proxysql-sidecar-cascade
+```
+
+#### Install Ingress controller and add a TCP service to the ingress
+
+```
+minikube addons enable ingress
+kubectl patch configmap tcp-services -n kube-system --patch '{"data":{"6033":"default/proxysql-cluster:6033"}}'
+```
+
+##### To verify
+
+```
+kubectl get configmap tcp-services -n kube-system -o yaml
+```
+
+##### Patch nginx ingress
+
+```
+vi nginx-ingress-controller-patch.yaml
+---
+spec:
+  template:
+    spec:
+      containers:
+      - name: nginx-ingress-controller
+        ports:
+         - containerPort: 6033
+           hostPort: 26033
+---
+        hostname="proxysql-cluster-controller"
+        port=6032
+        weight=0
+        comment="proxysql-cluster-controller"
+kubectl patch deployment nginx-ingress-controller --patch "$(cat nginx-ingress-controller-patch.yaml)" -n kube-system
+```
+
+##### Connect to ProxySQL 
+
+```
+mysql -h$(minikube ip) -P26033 -uroot -pXHCO2ydDXj
 ```
 
 ## Useful commands
