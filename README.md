@@ -7,6 +7,22 @@ Tools that will be used:
 - Minikube
 - Helm
 
+# Scaleway notes
+
+```
+# Connect via SSH and forward Kubernetes dashboard URL
+ssh -L 8001:10.18.120.41:8001 root@51.15.64.202
+
+# Change to centos user (do not run this stuff under root)
+su - centos
+
+# Start a proxy for the Kubernetes dashboard using the internal IP (this will launch a foreground process, must keep running to access dashboard)
+kubectl proxy --address=10.18.120.41 --accept-hosts='^.*'
+
+# In a browser on your local machine open:
+http://127.0.0.1:8001/api/v1/namespaces/kubernetes-dashboard/services/http:kubernetes-dashboard:/proxy/#/overview?namespace=default
+```
+
 ## Installing tools (note packaged installation is also an option). 
 
 These steps assume "/usr/local/bin" is defined in your PATH and you are using Linux :)
@@ -81,11 +97,11 @@ minikube dashboard --url
 http://127.0.0.1:45536/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
 
 # Start dashboard on local IP (forwarded from within Minikube VM) - default port is 8001
-# and the address in this example 192.169.1.28 is the host physical machine IP (not the VM)
+# and the address in this example 10.18.120.41 is the host physical machine IP (not the VM)
 kubectl proxy --address=10.18.120.41 --accept-hosts='^.*'
 ```
 
-Combining the URL and the `kubectl proxy --address` on default port 8001 the resulting url is: http://10.18.120.41:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
+Combining the URL and the `kubectl proxy --address` on default port 8001 the resulting url is: http://10.18.120.41:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/ (or alternatively use the SSH tunnel if on Scaleway and connect to your 127.0.0.1:8001)
 
 ## Deploying with Helm
 

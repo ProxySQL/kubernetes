@@ -23,7 +23,7 @@ ingress:
     # kubernetes.io/ingress.class: proxysql
     # kubernetes.io/tls-acme: "true"
   hosts:
-    - host: 192.168.1.28
+    - host: 10.18.120.41
       paths: []
 
   tls: []
