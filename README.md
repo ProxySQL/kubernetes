@@ -58,9 +58,9 @@ chmod 700 get_helm.sh
 ### Minikube
 
 ```
-minikube config set memory 8192
+minikube config set memory 6144
 minikube config set cpus 3
-minikube config set disk-size 30000MB
+minikube config set disk-size 50000MB
 minikube config set vm-driver kvm2
 minikube start 
 minikube status
@@ -82,10 +82,10 @@ http://127.0.0.1:45536/api/v1/namespaces/kube-system/services/http:kubernetes-da
 
 # Start dashboard on local IP (forwarded from within Minikube VM) - default port is 8001
 # and the address in this example 192.169.1.28 is the host physical machine IP (not the VM)
-kubectl proxy --address=192.168.1.28 --accept-hosts='^.*'
+kubectl proxy --address=10.18.120.41 --accept-hosts='^.*'
 ```
 
-Combining the URL and the `kubectl proxy --address` on default port 8001 the resulting url is: http://192.168.1.28:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
+Combining the URL and the `kubectl proxy --address` on default port 8001 the resulting url is: http://10.18.120.41:8001/api/v1/namespaces/kube-system/services/http:kubernetes-dashboard:/proxy/
 
 ## Deploying with Helm
 
