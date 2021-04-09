@@ -1,6 +1,6 @@
 # Welcome to ProxySQL on K8s
 
-<a><img align=center src="https://i0.wp.com/proxysql.com/wp-content/uploads/2020/04/ProxySQL-Colour-Logo.png?fit=800%2C278&ssl=1" alt="ProxySQL"></a>
+<a><img align="middle" src="https://i0.wp.com/proxysql.com/wp-content/uploads/2020/04/ProxySQL-Colour-Logo.png?fit=800%2C278&ssl=1" alt="ProxySQL"></a>
 
 Tools used for sample deployment:
 
