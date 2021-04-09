@@ -1,4 +1,4 @@
-# Welcome to ProxySQL on K8s
+# ProxySQL on Kubernetes
 
 <p align="center">
 <a><img width="100%" src="https://i0.wp.com/proxysql.com/wp-content/uploads/2020/04/ProxySQL-Colour-Logo.png?fit=800%2C278&ssl=1" alt="ProxySQL"></a>
