@@ -7,13 +7,13 @@ Tools that will be used:
 - Minikube
 - Helm
 
-# Scaleway notes
+# Cloud Deployment Notes
 
 ```
 # Connect via SSH and forward Kubernetes dashboard URL
 ssh -L 8001:10.18.120.41:8001 root@51.15.64.202
 
-# Change to centos user (do not run this stuff under root)
+# Change to to a non-root user e.g. `centos` (do not run this under `root`)
 su - centos
 
 # Start a proxy for the Kubernetes dashboard using the internal IP (this will launch a foreground process, must keep running to access dashboard)
