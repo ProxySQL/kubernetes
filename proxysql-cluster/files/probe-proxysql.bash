@@ -2,7 +2,7 @@
 set -e
 
 mbin="/usr/bin/mysql"
-lcon="-h127.0.0.1 -P6032 -uadmin -padmin"
+lcon="-h127.0.0.1 -P6032 -u$ADMIN_USER -p$ADMIN_PASSWORD"
 opts="-NB"
 
 hg0_avail=$($mbin $lcon $opts -e"select count(*) from runtime_mysql_servers where hostgroup_id = 0")

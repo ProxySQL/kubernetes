@@ -1,3 +1,4 @@
+{{- $root := . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,12 +14,18 @@ spec:
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ include "proxysql.name" . }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{ include "proxysql.labels" . | nindent 8 }}
+      annotations:
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
     spec:
     {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
+    {{- end }}
+    {{- if .Values.securityContext.enabled }}
+      securityContext:
+        fsGroup: {{ .Values.securityContext.fsGroup }}
+        runAsUser: {{ .Values.securityContext.runAsUser }}
     {{- end }}
       containers:
         - name: {{ .Chart.Name }}
@@ -32,12 +39,28 @@ spec:
               containerPort: 6032
               protocol: TCP
           volumeMounts:
-            - name: {{ .Release.Name }}-config
+            - name: probe-config
               mountPath: /usr/local/bin/probe-proxysql.bash
               subPath: probe-proxysql.bash
-            - name: {{ .Release.Name }}-config
+              readOnly: true
+            - name: proxy-config
               mountPath: /etc/proxysql.cnf
               subPath: proxysql.cnf
+              readOnly: true
+            - name: datadir
+              mountPath: {{ .Values.config.datadir }}
+            {{- if .Values.eventsLog.enabled }}
+            - name: eventslog
+              mountPath: {{ .Values.eventsLog.directory }}
+            {{- end }}
+          env:
+              {{- range $index, $envName := .Values.secretEnvs }}
+              - name: {{ $envName }}
+                valueFrom:
+                  secretKeyRef:
+                    name: {{ include "proxysql.fullname" $root }}-secret
+                    key: {{ $envName }}
+              {{- end }}
           livenessProbe:
             exec:
               command: ["/bin/bash","/usr/local/bin/probe-proxysql.bash"]
@@ -46,6 +69,19 @@ spec:
               command: ["/bin/bash","/usr/local/bin/probe-proxysql.bash"]
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+        {{- if and .Values.eventsLog.enabled .Values.eventsLog.tailer.enabled }}
+        - name: "eventslog"
+          image: "{{ .Values.eventsLog.tailer.image.repository }}:{{ .Values.eventsLog.tailer.image.tag }}"
+          imagePullPolicy: "{{ .Values.eventsLog.tailer.image.pullPolicy }}"
+          command:
+            - "xtail"
+            - "/logs/"
+          resources:
+            {{- toYaml .Values.eventsLog.tailer.resources | nindent 12 }}
+          volumeMounts:
+          - name: eventslog
+            mountPath: /logs
+        {{- end }}
     {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
@@ -59,6 +95,15 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       volumes:
-        - name: {{ .Release.Name }}-config
+        - name: probe-config
           configMap:
-            name: {{ .Release.Name }}-proxysqlcm
+            name: {{ include "proxysql.fullname" . }}-cm
+        - name: proxy-config
+          secret:
+            secretName: {{ include "proxysql.fullname" . }}-secret
+        - name: datadir
+          emptyDir: {}
+        {{- if .Values.eventsLog.enabled }}
+        - name: eventslog
+          emptyDir: {}
+        {{- end }}

@@ -43,3 +43,24 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{- define "proxysql.pwd" -}}
+{{- if not .password }}
+{{- $_ := set . "password" (randAlphaNum 20)  }}
+{{- end -}}
+{{ .password }}
+{{- end -}}
+
+{{- define "proxysql.cfgmapdump" -}}
+{{ range $key, $val := . -}}
+{{ $key }}={{ $val }}
+{{ end -}}
+{{- end -}}
+
+{{- define "proxysql.cfglistdump" -}}
+{{- range $idx, $val := . -}}
+{
+  {{ include "proxysql.cfgmapdump" $val | nindent 2 }}
+},
+{{ end -}}
+{{- end -}}
