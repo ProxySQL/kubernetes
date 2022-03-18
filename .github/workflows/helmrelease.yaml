@@ -2,9 +2,10 @@ name: Release Charts
 
 on:
   push:
-    - cfg-template
-  paths:
-    - "helm/**"
+    branches:
+      - cfg-template
+    paths:
+      - "helm/**"
 
 jobs:
   release:
