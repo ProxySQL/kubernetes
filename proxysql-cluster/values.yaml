@@ -48,7 +48,7 @@ eventsLog:
     #    cpu: 10m
     #    memory: 10Mi
     #  requests:
-    #    cpu: 5m
+    #    cpu: 3m
     #    memory: 10Mi
 
   tailer:
@@ -64,7 +64,7 @@ eventsLog:
     #    cpu: 10m
     #    memory: 10Mi
     #  requests:
-    #    cpu: 5m
+    #    cpu: 1m
     #    memory: 10Mi
 
 
@@ -182,6 +182,8 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+podDisruptionBudget: {}
 
 securityContext:
   enabled: true
