@@ -7,3 +7,7 @@ metadata:
 data:
   probe-proxysql.bash: |
 {{ tpl (.Files.Get "files/probe-proxysql.bash") . | indent 4 }}
+  {{- if and .Values.eventsLog.enabled .Values.eventsLog.logrotate.enabled }}
+  cleanlogs.bash: |
+{{ tpl (.Files.Get "files/cleanlogs.bash") . | indent 4 }}
+  {{- end }}

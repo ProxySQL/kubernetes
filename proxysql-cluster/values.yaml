@@ -34,6 +34,23 @@ eventsLog:
   enabled: false
   directory: /var/log/proxysql/eventslog/
   filename: queries
+  logrotate:
+    # clean up old logs
+    enabled: false
+    copies: 3
+
+    image:
+      repository: "alpine"
+      tag: "3.14.4"
+      pullPolicy: "IfNotPresent"
+    resources: {}
+    #  limits:
+    #    cpu: 10m
+    #    memory: 10Mi
+    #  requests:
+    #    cpu: 5m
+    #    memory: 10Mi
+
   tailer:
     # sidecar for outputting query log, hopefully made redundant by
     # https://github.com/sysown/proxysql/issues/3805
