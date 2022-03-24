@@ -1,0 +1,191 @@
+# Default values for proxysql.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2
+
+image:
+  repository: pondix/proxysqlk8s
+  tag: 2.0.10
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+service:
+  type: ClusterIP
+  port: 6033
+
+secretEnvs: ["ADMIN_USER", "ADMIN_PASSWORD", "RADMIN_USER", "RADMIN_PASSWORD"]
+
+credentials:
+  admin:
+    user: admin
+    #if blank a random password is created
+    password: ""
+
+  radmin:
+    user: radmin
+    #if blank a random password is created
+    password: ""
+
+eventsLog:
+  enabled: false
+  directory: /var/log/proxysql/eventslog/
+  filename: queries
+  logrotate:
+    # clean up old logs
+    enabled: false
+    copies: 3
+
+    image:
+      repository: "alpine"
+      tag: "3.14.4"
+      pullPolicy: "IfNotPresent"
+    resources: {}
+    #  limits:
+    #    cpu: 10m
+    #    memory: 10Mi
+    #  requests:
+    #    cpu: 3m
+    #    memory: 10Mi
+
+  tailer:
+    # sidecar for outputting query log, hopefully made redundant by
+    # https://github.com/sysown/proxysql/issues/3805
+    enabled: false
+    image:
+      repository: "rickw/debian-exim-send"
+      tag: "latest"
+      pullPolicy: "IfNotPresent"
+    resources: {}
+    #  limits:
+    #    cpu: 10m
+    #    memory: 10Mi
+    #  requests:
+    #    cpu: 1m
+    #    memory: 10Mi
+
+
+mysql:
+  servers:
+  - address: '"192.168.0.1"'
+    port: 3306
+    hostgroup: 0
+    max_connections: 5000
+  - address: '"192.168.1.1"'
+  users:
+  - username: '"user"'
+    password: '"password"'
+    default_hostgroup: 0
+    active: 1
+  queryRules:
+  - rule_id: 1
+    active: 1
+    match_digest: '"."'
+    log: 1
+    destination_hostgroup: 0
+    apply: 1
+  variables:
+    threads: 2
+    max_connections: 2048
+    default_query_delay: 0
+    default_query_timeout: "3600000"
+    have_compress: true
+    poll_timeout: 2000
+    interfaces: '"0.0.0.0:6033"'
+    stacksize: "1048576"
+    server_version: '"8.0.20"'
+    connect_timeout_server: 3000
+    monitor_username: '"user"'
+    monitor_password: '"password"'
+    monitor_history: 600000
+    monitor_connect_interval: 5000
+    monitor_ping_interval: 2000
+    monitor_read_only_interval: 1500
+    monitor_read_only_timeout: 500
+    ping_interval_server_msec: 15000
+    ping_timeout_server: 500
+    commands_stats: true
+    sessions_sort: true
+    connect_retries_on_failure: 10
+
+
+config:
+  datadir: /var/lib/proxysql
+  template: |
+    datadir="{{ .Values.config.datadir }}"
+
+    admin_variables=
+    {
+      admin_credentials="{{ .Values.credentials.admin.user }}:{{ include "proxysql.pwd" .Values.credentials.admin }};{{ .Values.credentials.radmin.user }}:{{ include "proxysql.pwd" .Values.credentials.radmin }}"
+      mysql_ifaces="0.0.0.0:6032"
+    }
+
+    mysql_variables=
+    {
+      {{ include "proxysql.cfgmapdump" .Values.mysql.variables | nindent 2 }}
+
+      {{- if .Values.eventsLog.enabled }}
+      eventslog_filename="{{ .Values.eventsLog.directory }}{{ .Values.eventsLog.filename }}"
+      eventslog_format=2
+      {{- end }}
+    }
+
+    # defines all the MySQL servers
+    mysql_servers =
+    (
+      {{ include "proxysql.cfglistdump" .Values.mysql.servers | nindent 2 }}
+    )
+
+    # defines all the MySQL users
+    mysql_users:
+    (
+      {{ include "proxysql.cfglistdump" .Values.mysql.users | nindent 2 }}
+    )
+
+    #defines MySQL Query Rules
+    mysql_query_rules:
+    (
+      {{ include "proxysql.cfglistdump" .Values.mysql.queryRules | nindent 2 }}
+    )
+
+ingress:
+  enabled: false
+  annotations: {}
+    # kubernetes.io/ingress.class: proxysql
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: 10.18.120.41
+      paths: []
+
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 1024Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 1024Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+podDisruptionBudget: {}
+
+securityContext:
+  enabled: true
+  fsGroup: 1000
+  runAsUser: 1000

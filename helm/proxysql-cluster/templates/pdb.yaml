@@ -1,0 +1,14 @@
+{{- if .Values.podDisruptionBudget -}}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "proxysql.fullname" . }}
+  labels:
+    {{- include "proxysql.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "proxysql.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  {{ toYaml .Values.podDisruptionBudget | nindent 2 }}
+{{- end -}}
